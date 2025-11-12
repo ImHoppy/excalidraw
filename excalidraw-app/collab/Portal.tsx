@@ -1,6 +1,5 @@
 import { CaptureUpdateAction } from "@excalidraw/excalidraw";
 import { trackEvent } from "@excalidraw/excalidraw/analytics";
-import { encryptData } from "@excalidraw/excalidraw/data/encryption";
 import { newElementWith } from "@excalidraw/element";
 import throttle from "lodash.throttle";
 
@@ -88,15 +87,10 @@ class Portal {
     roomId?: string,
   ) {
     if (this.isOpen()) {
-      const json = JSON.stringify(data);
-      const encoded = new TextEncoder().encode(json);
-      const { encryptedBuffer, iv } = await encryptData(this.roomKey!, encoded);
-
       this.socket?.emit(
         volatile ? WS_EVENTS.SERVER_VOLATILE : WS_EVENTS.SERVER,
         roomId ?? this.roomId,
-        encryptedBuffer,
-        iv,
+        data,
       );
     }
   }

@@ -18,7 +18,7 @@ import {
   resolvablePromise,
   throttleRAF,
 } from "@excalidraw/common";
-import { decryptData } from "@excalidraw/excalidraw/data/encryption";
+
 import { getVisibleSceneBounds } from "@excalidraw/element";
 import { newElementWith } from "@excalidraw/element";
 import { isImageElement, isInitializedImageElement } from "@excalidraw/element";
@@ -440,27 +440,6 @@ class Collab extends PureComponent<CollabProps, CollabState> {
     return await this.fileManager.getFiles(unfetchedImages);
   };
 
-  private decryptPayload = async (
-    iv: Uint8Array,
-    encryptedData: ArrayBuffer,
-    decryptionKey: string,
-  ): Promise<ValueOf<SocketUpdateDataSource>> => {
-    try {
-      const decrypted = await decryptData(iv, encryptedData, decryptionKey);
-
-      const decodedData = new TextDecoder("utf-8").decode(
-        new Uint8Array(decrypted),
-      );
-      return JSON.parse(decodedData);
-    } catch (error) {
-      window.alert(t("alerts.decryptFailed"));
-      console.error(error);
-      return {
-        type: WS_SUBTYPES.INVALID_RESPONSE,
-      };
-    }
-  };
-
   private fallbackInitializationHandler: null | (() => any) = null;
 
   startCollaboration = async (
@@ -562,16 +541,9 @@ class Collab extends PureComponent<CollabProps, CollabState> {
     // All socket listeners are moving to Portal
     this.portal.socket.on(
       "client-broadcast",
-      async (encryptedData: ArrayBuffer, iv: Uint8Array) => {
-        if (!this.portal.roomKey) {
-          return;
-        }
-
-        const decryptedData = await this.decryptPayload(
-          iv,
-          encryptedData,
-          this.portal.roomKey,
-        );
+      async (data: ValueOf<SocketUpdateDataSource>) => {
+        // Handle unencrypted data directly
+        const decryptedData = data;
 
         switch (decryptedData.type) {
           case WS_SUBTYPES.INVALID_RESPONSE:

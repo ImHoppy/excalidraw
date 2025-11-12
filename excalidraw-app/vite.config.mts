@@ -17,6 +17,18 @@ export default defineConfig(({ mode }) => {
       port: Number(envVars.VITE_APP_PORT || 3000),
       // open the browser
       open: true,
+      proxy: {
+        "/api": {
+          target: envVars.VITE_APP_API_SERVER_URL || "http://localhost:8080",
+          changeOrigin: true,
+          secure: false,
+        },
+        "/socket.io": {
+          target: "http://localhost:8080",
+          changeOrigin: true,
+          ws: true,
+        }
+      },
     },
     // We need to specify the envDir since now there are no
     //more located in parallel with the vite.config.ts file but in parent dir
